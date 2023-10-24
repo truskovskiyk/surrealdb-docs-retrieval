@@ -19,7 +19,7 @@ There is not much information about SurrealDB available on StackOverflow and Cha
 
 ## How to Query:
 
-- Simple QA retrieval chain
+- Simple Question and Answer (QA) retrieval chain
 - Conv retrieval chain
 - Agent retrieval
 
@@ -29,7 +29,7 @@ Since SurrealDB is a very active project, I've set up the pipeline to re-run onc
 
 This may be controversial but none of the approaches provided me with satisfactory results. I had high hopes for the Agent - and while it performs well for some questions, it struggles with some of the basic ones.
 
-## Exact Dagster flow:
+## Dagster flow:
 
 ![DAG](./docs/Asset_Group_default.svg)
 
