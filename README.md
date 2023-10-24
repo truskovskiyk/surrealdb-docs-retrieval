@@ -2,7 +2,7 @@
 
 
 ## Disclaimer:
-I wrote a small tool for Surreal DB over the weekend, just for fun, to learn more about Surreal and agents.
+I wrote a small tool for Surreal DB over the weekend, just for fun, to learn more about SurrealDB and LangChain agents.
 
 ## Problem:
 
