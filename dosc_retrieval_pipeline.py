@@ -1,4 +1,4 @@
-import pickle
+import shutil
 import subprocess
 from pathlib import Path
 from typing import List
@@ -17,10 +17,12 @@ from langchain.globals import set_llm_cache
 from langchain.memory import ConversationSummaryMemory
 from langchain.text_splitter import Language, RecursiveCharacterTextSplitter
 from langchain.vectorstores.faiss import FAISS
+
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 
 
+from langchain_surreal_db_integration import SurrealDB as SurrealDBVectorStore
 
 
 set_llm_cache(SQLiteCache(database_path=".langchain.db"))
@@ -91,24 +93,42 @@ def convert_all_docs(
 
 def get_github_docs(repo_owner: str, repo_name: str) -> Path:
     d = ARTIFACTS_PATH
-    d.mkdir(exist_ok=True)
+    if d.exists():
+        shutil.rmtree(d)
+    d.mkdir(parents=True)
     subprocess.check_call(f"git clone --depth 1 https://github.com/{repo_owner}/{repo_name}.git", cwd=d, shell=True)
     return d / repo_name
 
 
 @asset
-def www_surrealdb_com_repo():
+def www_surrealdb_com_repo(context: AssetExecutionContext):
+    context.add_output_metadata(
+        metadata={
+            "surrealdb_docs_url": MetadataValue.url("https://surrealdb.com/docs"),
+        }
+    )
+
     return get_github_docs("surrealdb", "www.surrealdb.com")
 
 
 @asset
-def surreal_markdown_docs(www_surrealdb_com_repo: Path):
+def surreal_markdown_docs(context: AssetExecutionContext, www_surrealdb_com_repo: Path):
     md_folder = Path("./artifacts/docs")
     convert_all_docs(
         md_folder=md_folder,
         hbs_root=www_surrealdb_com_repo / "app/templates/docs",
         snippets_folder=www_surrealdb_com_repo / "app/snippets/",
     )
+
+    with open(md_folder / 'introduction.mongo.md', 'r') as f:
+        md_str = f.read()
+
+    context.add_output_metadata(
+        metadata={
+            'Details': MetadataValue.md(md_str)
+        }
+    )
+
     return md_folder
 
 
@@ -121,13 +141,11 @@ def surreal_langchain_docs(surreal_markdown_docs: Path) -> List[Document]:
     retry_policy=RetryPolicy(max_retries=5, delay=5),
     freshness_policy=FreshnessPolicy(maximum_lag_minutes=60 * 24),
 )
-def simple_faiss_search_index(surreal_langchain_docs):
+def surreal_db_search_index(surreal_langchain_docs):
     markdown_splitter = RecursiveCharacterTextSplitter.from_language(language=Language.MARKDOWN, chunk_size=2000, chunk_overlap=200)
     texts = markdown_splitter.split_documents(surreal_langchain_docs)
 
-    with open(INDEX_PATH, "wb") as f:
-        index = FAISS.from_documents(texts, OpenAIEmbeddings())
-        pickle.dump(index, f)
+    index = SurrealDBVectorStore.from_documents(texts, OpenAIEmbeddings())
     return index
 
 
@@ -140,18 +158,23 @@ def list_of_test_cases(context: AssetExecutionContext):
         "Write an SQL query to select 5 rows from a table.",
         "Can you provide an example of a live query?",
         "Why do I need a live query?",
+        "How could upload banch of data into SurrealDB? Could I use csv, tsv, json or parquet format?",
+        "Does SurrealDB have demo data?",
+        "How does surreal import command work?",
+        "Could you some me all CREATE statments for SurrealDB?",
+        "How could I convert this SQL code 'SELECT COUNT(*) FROM hits;' into Surreal Query Language?"
+        "How could I convert this SQL code 'SELECT AdvEngineID, COUNT(*) FROM hits WHERE AdvEngineID <> 0 GROUP BY AdvEngineID ORDER BY COUNT(*) DESC;' into Surreal Query Language?"
     ]
     context.add_output_metadata(
         metadata={
             "test_cases": test_cases,
         }
     )
-
     return test_cases
 
 
 @asset
-def qa_chain_examples(context: AssetExecutionContext, simple_faiss_search_index, list_of_test_cases):
+def qa_chain_examples(context: AssetExecutionContext, surreal_db_search_index, list_of_test_cases):
     test_cases = []
 
     llm = ChatOpenAI(model_name=MODEL_NAME, temperature = 0)
@@ -160,7 +183,7 @@ def qa_chain_examples(context: AssetExecutionContext, simple_faiss_search_index,
     for q in list_of_test_cases:
         r = chain(
             {
-                "input_documents": simple_faiss_search_index.similarity_search(q, k=16),
+                "input_documents": surreal_db_search_index.similarity_search(q, k=16),
                 "question": q,
             },
             return_only_outputs=True,
@@ -177,8 +200,8 @@ def qa_chain_examples(context: AssetExecutionContext, simple_faiss_search_index,
 
 
 @asset
-def conv_retrieval_examples(context: AssetExecutionContext, simple_faiss_search_index, list_of_test_cases):
-    retriever = simple_faiss_search_index.as_retriever(search_kwargs={'fetch_k': 16})
+def conv_retrieval_examples(context: AssetExecutionContext, surreal_db_search_index, list_of_test_cases):
+    retriever = surreal_db_search_index.as_retriever(search_kwargs={'fetch_k': 16})
 
     llm = ChatOpenAI(model_name=MODEL_NAME, temperature = 0)
     memory = ConversationSummaryMemory(llm=llm, memory_key="chat_history", return_messages=True)
@@ -199,8 +222,8 @@ def conv_retrieval_examples(context: AssetExecutionContext, simple_faiss_search_
     return df
 
 @asset
-def agent_retrieval_examples(context: AssetExecutionContext, simple_faiss_search_index, list_of_test_cases):
-    retriever = simple_faiss_search_index.as_retriever(search_kwargs={'fetch_k': 16})
+def agent_retrieval_examples(context: AssetExecutionContext, surreal_db_search_index, list_of_test_cases):
+    retriever = surreal_db_search_index.as_retriever(search_kwargs={'fetch_k': 16})
     tool = create_retriever_tool(retriever, "surreal-db-docs", "Searches and returns documents about SurreadDB.")
     tools = [tool]
 

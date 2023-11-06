@@ -25,15 +25,30 @@ There is not much information about SurrealDB available on StackOverflow and Cha
 
 Since SurrealDB is a very active project, I've set up the pipeline to re-run once every day!
 
-## Results:
+## Vector DB:
 
-This may be controversial but none of the approaches provided me with satisfactory results. I had high hopes for the Agent - and while it performs well for some questions, it struggles with some of the basic ones.
+I am using SurrealDB itself as a Vector DB! Cool - yeah! check out my LangChain <> SurrealDB integration!
 
+ 
 ## Dagster flow:
 
 ![DAG](./docs/Asset_Group_default.svg)
 
 ## Run code yourself
+
+Export OPEN AI token
+
+```
+export OPENAI_API_KEY=*******
+```
+
+Run SurrealDB (We are using it as vector store for our index)
+
+```
+docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start
+```
+
+Run Dagster
 
 ```
 dagit -f dosc_retrieval_pipeline.py
