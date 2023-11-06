@@ -1,12 +1,12 @@
 # SurrealDB Docs Retrieval Pipeline
 
+## About:
 
-## Disclaimer:
-I wrote a small tool for Surreal DB over the weekend, just for fun, to learn more about SurrealDB and LangChain agents.
+I wrote a small tool for SurrealDB over the weekend, just for fun, to learn more about SurrealDB and LangChain agents.
 
 ## Problem:
 
-There is not much information about SurrealDB available on StackOverflow and ChatGPT. The only source from which you can obtain information is the SurrealDB documentation, available at -> https://surrealdb.com/docs. I wanted to create a tool that would allow me to ask questions about how to perform certain queries in SurrealDB, and receive precise answers with references.
+I could not locate much information about SurrealDB  on StackOverflow and ChatGPT. I found  information on the SurrealDB documentation, available at -> https://surrealdb.com/docs. I wanted to create a tool that would allow me to ask questions about how to perform certain queries in SurrealDB, and receive precise answers with references.
 
 
 ## Flow:
@@ -23,11 +23,11 @@ There is not much information about SurrealDB available on StackOverflow and Cha
 - Conv retrieval chain
 - Agent retrieval
 
-Since SurrealDB is a very active project, I've set up the pipeline to re-run once every day!
+Since SurrealDB is an active project, I've set up the pipeline to re-run once every day!
 
 ## Vector DB:
 
-I am using SurrealDB itself as a Vector DB! Cool - yeah! check out my LangChain <> SurrealDB integration!
+I am using SurrealDB itself as a Vector DB! Cool - yeah! Check out my [LangChain <> SurrealDB](./langchain_surreal_db_integration.py) integration!
 
  
 ## Dagster flow:
