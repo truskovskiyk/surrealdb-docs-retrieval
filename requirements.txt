@@ -1,8 +1,8 @@
-langchain==0.0.334
-surrealdb==0.3.1
-pandas==2.1.3
-dagster==1.5.7
+dagit==1.5.3
+dagster==1.5.3
+langchain==0.0.320
 markdownify==0.11.6
-dagit==1.5.7
-openai==1.2.3
+pandas==1.5.3
 tiktoken==0.5.1
+openai==0.28.1
+surrealdb==0.3.1
