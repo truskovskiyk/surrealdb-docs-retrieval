@@ -34,7 +34,8 @@ I am using SurrealDB itself as a Vector DB! Cool - yeah! Check out my [LangChain
 
 ![DAG](./docs/Asset_Group_default.svg)
 
-## Run code yourself
+## Setup
+
 
 Export OPEN AI token
 
@@ -48,7 +49,17 @@ Run SurrealDB (We are using it as vector store for our index)
 docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start
 ```
 
-Run Dagster
+Install python dependencies
+
+```
+python -m venv .env
+source .env/bin/activate
+pip install -r requirements.txt
+```
+
+## Run 
+
+To run dagster UI
 
 ```
 dagit -f dosc_retrieval_pipeline.py
